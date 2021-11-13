@@ -3,7 +3,7 @@
 
 #include "../Clock.hpp"
 
-// NOTE: FOR YOUR OWN SAFETY, DO NOT EDIT THIS CODE:
+// Conventional matrix multiplication, used for benchmarking my improvements:
 __attribute__((noinline)) void naive_mult(
         double* __restrict C,
         double* __restrict B,
@@ -17,8 +17,8 @@ __attribute__((noinline)) void naive_mult(
                 C[i * N + j] += A[i * N + k] * B[k * N + j];
         }
 }
-// END NOTE
 
+// Print a given matrix 
 void print(double* matrix, int N)
 {
     for (int i = 0; i < N; i++) {
@@ -32,47 +32,7 @@ void print(double* matrix, int N)
     }
 }
 
-// UNUSED
-// This function performs all matrix operations in column major order
-// All attempts at this function result in high numeric error
-__attribute__((noinline)) void cm_mult(
-        double* __restrict C,
-        double* __restrict &B,
-        double* __restrict &A,
-        const unsigned int N)
-{
-    for (unsigned int i = 0; i < N; ++i)
-        for (unsigned int j = 0; j < N; ++j) {
-            C[i * N + j] = 0.0;
-            for (unsigned int k = 0; k < N; ++k)
-                C[i * N + j] += A[i * N + k] * B[k * N + j];
-        }
-}
-
-// UNUSED
-// This is no longer the most optimal fiunction
-// It simply transposes B before passing it to naive_mult()
-__attribute__((noinline)) void optimal_mult(
-        double* __restrict C,
-        double* __restrict B,
-        double* __restrict A, // A is never written to
-        const unsigned int N)
-{
-    // Transpose B: (by swapping half of the elements only)
-    for (unsigned int i = 0; i < N; ++i)
-        for (unsigned int j = 0; j < i; ++j)
-            std::swap(B[i * N + j], B[i + j * N]);
-
-    for (unsigned int i = 0; i < N; ++i)
-        for (unsigned int j = 0; j < N; ++j) {
-            C[i * N + j] = 0.0;
-            for (unsigned int k = 0; k < N; ++k)
-                C[i * N + j] += A[i * N + k] * B[k * N + j];
-        }
-}
-
 // This is identical to naive_mult, but will be called in a multi-threaded context
-// Changed for column major
 __attribute__((noinline)) void thread_mult(
         double* __restrict C,
         double* __restrict B,
@@ -90,7 +50,7 @@ __attribute__((noinline)) void thread_mult(
 }
 
 // 27 X speed up with N = 10
-// This function makes use of multithreading (See thread_mult() above)
+// This function makes use of multithreading (see thread_mult() above)
 __attribute__((noinline)) void mult(
         double* __restrict C,
         double* __restrict B,
@@ -128,7 +88,6 @@ __attribute__((noinline)) void mult(
             std::swap(B[i * N + j], B[i + j * N]);
 }
 
-// NOTE: FOR YOUR OWN SAFETY, DO NOT EDIT THIS CODE:
 int main(int argc, char** argv)
 {
     if (argc != 3)
@@ -149,38 +108,14 @@ int main(int argc, char** argv)
 
         double* C = new double[N * N];
 
-//        std::cout << "Matrix A" <<std::endl ;
-//        std::cout << std::endl;
-//        print(A, N);
-//        std::cout << std::endl;
-//        std::cout << "Matrix B" <<std::endl ;
-//        std::cout << std::endl;
-//        print(B, N);
-//        std::cout << std::endl;
-//        std::cout << "Matrix C Initial" <<std::endl ;
-//        std::cout << std::endl;
-//        print(C, N);
-//        std::cout << std::endl;
-
         Clock c;
         mult(C, B, A, N);
         float mult_time = c.tock();
-
-//        std::cout << "Matrix C after mult()" <<std::endl ;
-//        std::cout << std::endl;
-//        print(C, N);
-//        std::cout << std::endl;
 
         double* C_naive = new double[N * N];
         c.tick();
         naive_mult(C_naive, B, A, N);
         float naive_mult_time = c.tock();
-
-//        std::cout << "Matrix C_Naive" <<std::endl ;
-//        std::cout << std::endl;
-//        print(C_naive, N);
-//        std::cout << std::endl;
-
 
         double max_l1_error = 0.0;
         for (unsigned long i = 0; i < N * N; ++i)
